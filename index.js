@@ -13,7 +13,7 @@ process.on("unhandledRejection", (reason, promise) => {
 const app=express();
 app.use(
   cors({
-    origin: "https://video-streming-git-main-rutvik-shivaji-bansodes-projects.vercel.app/login",
+    origin: "https://video-streming-git-main-rutvik-shivaji-bansodes-projects.vercel.app",
     Credential: true,
   })
 );
