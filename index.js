@@ -13,7 +13,7 @@ process.on("unhandledRejection", (reason, promise) => {
 const app=express();
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "https://video-streming-git-main-rutvik-shivaji-bansodes-projects.vercel.app/login",
     Credential: true,
   })
 );
