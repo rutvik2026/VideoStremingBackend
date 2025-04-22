@@ -14,6 +14,8 @@ import jwt from "jsonwebtoken";
 import { title } from "process";
 import { promises } from "dns";
 const registerController = async (req, res) => {
+   console.log("Request Body:", req.body);
+    console.log("Files:", req.file.path);
   try {
     console.log("Request Body:", req.body);
     console.log("Files:", req.file.path);
