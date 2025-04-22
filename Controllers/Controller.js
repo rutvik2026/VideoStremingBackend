@@ -16,7 +16,7 @@ import { promises } from "dns";
 const registerController = async (req, res) => {
   try {
     console.log("Request Body:", req.body);
-    console.log("Files:", req.file.path);
+    console.log("Files:",req.file?.path);
     if (!req.body.name || !req.body.password || !req.body.email || !req.file) {
       return res.status(201).json({ message: "All Fields are required" });
     }
