@@ -14,8 +14,6 @@ import jwt from "jsonwebtoken";
 import { title } from "process";
 import { promises } from "dns";
 const registerController = async (req, res) => {
-   console.log("Request Body:", req.body);
-    console.log("Files:", req.file.path);
   try {
     console.log("Request Body:", req.body);
     console.log("Files:", req.file.path);
@@ -52,8 +50,8 @@ const registerController = async (req, res) => {
       .status(200)
       .json({ message: "UserRegister Succesfully", success: true });
   } catch (error) {
-    console.log("error in registewrController2", error);
-    res.status(505).json({ message: "Internal server error3" });
+    console.log("error in registewrController", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
