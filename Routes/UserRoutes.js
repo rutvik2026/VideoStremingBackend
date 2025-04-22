@@ -6,7 +6,7 @@ import { gethistroryvidios, getLikedVideoController, getMyVideoController, getSu
 // Configure Multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uplods/");
+    cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + "-" + file.originalname);
