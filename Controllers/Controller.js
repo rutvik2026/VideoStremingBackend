@@ -50,7 +50,7 @@ const registerController = async (req, res) => {
       .status(200)
       .json({ message: "UserRegister Succesfully", success: true });
   } catch (error) {
-    console.log("error in registewrController", error);
+    console.log("error in registewrController2", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
