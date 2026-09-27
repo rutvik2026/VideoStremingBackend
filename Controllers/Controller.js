@@ -121,27 +121,72 @@ const uploadVideoController = async (req, res) => {
    
     const uploadedVideo = await uploadVideoOnSupabase1(filePath);
 
-    if (!uploadedVideo) {
-      return res.status(500).json({ error: "Supabase upload failed!" });
-    }
-   console.log("uploadvideo", uploadedVideo);
-   const { videoUrl, indexM3U8Url, segmentUrls } = uploadedVideo;
-  console.log("video upload urls", videoUrl, segmentUrls, indexM3U8Url);
+console.log("===== SUPABASE UPLOAD COMPLETED =====");
+console.log("uploadedVideo:", uploadedVideo);
 
-   
-    const newVideo = {
-      title,
-      description,
-      channelName,
-      thumbnail,
-      channelId,
-      date: Date.now(),
-      indexM3U8Url,
-      segmentUrls,
-      videoUrl,
-    };
-    const video=new videoModel(newVideo);
-    const vid=await video.save();
+if (!uploadedVideo) {
+    return res.status(500).json({
+        error: "Supabase upload failed!"
+    });
+}
+
+const {
+    videoUrl,
+    indexM3U8Url,
+    segmentUrls
+} = uploadedVideo;
+
+console.log("===== VIDEO URLS =====");
+console.log("videoUrl:", videoUrl);
+console.log("indexM3U8Url:", indexM3U8Url);
+console.log("segmentUrls:", segmentUrls);
+
+const newVideo = {
+    title,
+    description,
+    channelName,
+    thumbnail,
+    channelId,
+    date: Date.now(),
+    indexM3U8Url,
+    segmentUrls,
+    videoUrl,
+};
+
+console.log("===== BEFORE MONGODB VIDEO SAVE =====");
+console.log("newVideo:", newVideo);
+
+const video = new videoModel(newVideo);
+
+console.log("===== VIDEO MODEL CREATED =====");
+
+const vid = await video.save();
+
+console.log("===== VIDEO SAVED TO MONGODB =====");
+console.log("MongoDB video:", vid);
+
+if (!user.videos) {
+    user.videos = [];
+}
+
+console.log("===== BEFORE USER SAVE =====");
+console.log("user.videos:", user.videos);
+
+user.videos.push(vid._id);
+
+await user.save();
+
+console.log("===== USER SAVED =====");
+
+fs.unlinkSync(filePath);
+
+console.log("===== SENDING SUCCESS RESPONSE =====");
+
+return res.status(201).json({
+    message: "Video uploaded successfully",
+    success: true,
+    video: vid,
+});
     if (!user.videos) {
       user.videos = [];
     }
