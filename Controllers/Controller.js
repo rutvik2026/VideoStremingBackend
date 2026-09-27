@@ -182,11 +182,7 @@ fs.unlinkSync(filePath);
 
 console.log("===== SENDING SUCCESS RESPONSE =====");
 
-return res.status(201).json({
-    message: "Video uploaded successfully",
-    success: true,
-    video: vid,
-});
+
     if (!user.videos) {
       user.videos = [];
     }
