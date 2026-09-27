@@ -90,118 +90,145 @@ const loginController = async (req, res) => {
 };
 
 const uploadVideoController = async (req, res) => {
-  try {
-    console.log("Request Body:", req.body);
-    
-     const videoFile = req.files["video"] ? req.files["video"][0] : null;
-     const avatarFile = req.files["avtar"] ? req.files["avtar"][0] : null;
-    console.log("video and avtar", videoFile, avatarFile);
-    if (!videoFile || !avatarFile) {
-      return res
-        .status(400)
-        .json({ error: "Both video and avatar are required" });
+    try {
+        console.log("Request Body:", req.body);
+
+        const videoFile = req.files["video"]
+            ? req.files["video"][0]
+            : null;
+
+        const avatarFile = req.files["avtar"]
+            ? req.files["avtar"][0]
+            : null;
+
+        console.log("video and avtar", videoFile, avatarFile);
+
+        if (!videoFile || !avatarFile) {
+            return res.status(400).json({
+                error: "Both video and avatar are required"
+            });
+        }
+
+        const {
+            channelId,
+            title,
+            description,
+            channelName
+        } = req.body;
+
+        if (!channelId) {
+            return res.status(400).json({
+                error: "Channel ID is required"
+            });
+        }
+
+        const user = await userModel.findById(channelId);
+
+        if (!user) {
+            return res.status(404).json({
+                error: "User not found"
+            });
+        }
+
+        console.log("Before Supabase Upload...");
+
+        const filePath = videoFile.path;
+        const thumbnailPath = avatarFile.path;
+
+        // Upload thumbnail to Cloudinary
+        const thumbnail = await uploadOnCoudinary(thumbnailPath);
+
+        console.log("Thumbnail uploaded:", thumbnail);
+
+        // Upload video + HLS files to Supabase
+        const uploadedVideo = await uploadVideoOnSupabase1(filePath);
+
+        console.log("===== SUPABASE UPLOAD COMPLETED =====");
+        console.log("uploadedVideo:", uploadedVideo);
+
+        if (!uploadedVideo) {
+            return res.status(500).json({
+                error: "Supabase upload failed!"
+            });
+        }
+
+        const {
+            videoUrl,
+            indexM3U8Url,
+            segmentUrls
+        } = uploadedVideo;
+
+        console.log("===== VIDEO URLS =====");
+        console.log("videoUrl:", videoUrl);
+        console.log("indexM3U8Url:", indexM3U8Url);
+        console.log("segmentUrls:", segmentUrls);
+
+        // Create MongoDB video object
+        const newVideo = {
+            title,
+            description,
+            channelName,
+            thumbnail,
+            channelId,
+            date: Date.now(),
+            indexM3U8Url,
+            segmentUrls,
+            videoUrl
+        };
+
+        console.log("===== BEFORE MONGODB VIDEO SAVE =====");
+        console.log("newVideo:", newVideo);
+
+        // Save video in MongoDB
+        const video = new videoModel(newVideo);
+
+        console.log("===== VIDEO MODEL CREATED =====");
+
+        const vid = await video.save();
+
+        console.log("===== VIDEO SAVED TO MONGODB =====");
+        console.log("MongoDB video:", vid);
+
+        // Add video ID to user's videos
+        if (!user.videos) {
+            user.videos = [];
+        }
+
+        user.videos.push(vid._id);
+
+        console.log("===== BEFORE USER SAVE =====");
+        console.log("user.videos:", user.videos);
+
+        await user.save();
+
+        console.log("===== USER SAVED =====");
+
+        // Delete local video after successful upload
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            console.log("Local video deleted");
+        }
+
+        console.log("===== SENDING SUCCESS RESPONSE =====");
+
+        return res.status(201).json({
+            message: "Video uploaded successfully",
+            success: true,
+            video: vid
+        });
+
+    } catch (error) {
+
+        console.error("================================");
+        console.error("ERROR IN UPLOAD VIDEO CONTROLLER");
+        console.error(error);
+        console.error("================================");
+
+        return res.status(500).json({
+            message: "Internal Server Error",
+            error: error.message
+        });
     }
-
-    const { channelId, title, description,channelName } = req.body;
-
-    if (!channelId) {
-      return res.status(402).json({ error: "Channel ID is required" });
-    }
-
-    const user = await userModel.findById(channelId);
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    console.log("Before surabase Upload...");
-    const filePath = videoFile.path;
-    const thumbnailPath = avatarFile.path;
-    const thumbnail = await uploadOnCoudinary(thumbnailPath);
-   
-    const uploadedVideo = await uploadVideoOnSupabase1(filePath);
-
-console.log("===== SUPABASE UPLOAD COMPLETED =====");
-console.log("uploadedVideo:", uploadedVideo);
-
-if (!uploadedVideo) {
-    return res.status(500).json({
-        error: "Supabase upload failed!"
-    });
-}
-
-const {
-    videoUrl,
-    indexM3U8Url,
-    segmentUrls
-} = uploadedVideo;
-
-console.log("===== VIDEO URLS =====");
-console.log("videoUrl:", videoUrl);
-console.log("indexM3U8Url:", indexM3U8Url);
-console.log("segmentUrls:", segmentUrls);
-
-const newVideo = {
-    title,
-    description,
-    channelName,
-    thumbnail,
-    channelId,
-    date: Date.now(),
-    indexM3U8Url,
-    segmentUrls,
-    videoUrl,
-};
-
-console.log("===== BEFORE MONGODB VIDEO SAVE =====");
-console.log("newVideo:", newVideo);
-
-const video = new videoModel(newVideo);
-
-console.log("===== VIDEO MODEL CREATED =====");
-
-const vid = await video.save();
-
-console.log("===== VIDEO SAVED TO MONGODB =====");
-console.log("MongoDB video:", vid);
-
-if (!user.videos) {
-    user.videos = [];
-}
-
-console.log("===== BEFORE USER SAVE =====");
-console.log("user.videos:", user.videos);
-
-user.videos.push(vid._id);
-
-await user.save();
-
-console.log("===== USER SAVED =====");
-
-fs.unlinkSync(filePath);
-
-console.log("===== SENDING SUCCESS RESPONSE =====");
-
-
-    if (!user.videos) {
-      user.videos = [];
-    }
-
-    user.videos.push(newVideo);
-    await user.save();
-
-  
-    fs.unlinkSync(filePath);
-
-    res.status(201).json({
-      message: "Video uploaded successfully",
-      success: true,
-      video: newVideo,
-    });
-  } catch (error) {
-    console.error("Error in uploadVideoController:", error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
 };
 
 const getVideoController=async(req,res)=>{
